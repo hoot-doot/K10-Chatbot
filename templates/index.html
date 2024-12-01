@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Financial Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8 max-w-2xl">
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <div class="bg-blue-600 text-white p-4">
+                <h1 class="text-2xl font-bold">Financial Chatbot</h1>
+                <p class="text-sm text-blue-100">Ask about revenue, net income, or cash flow for Apple, Microsoft, or Tesla</p>
+            </div>
+            
+            <div id="chatContainer" class="p-4 h-96 overflow-y-auto">
+                <!-- Chat messages will be dynamically inserted here -->
+            </div>
+            
+            <div class="border-t p-4 flex">
+                <input type="text" id="userInput" 
+                    class="flex-grow p-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    placeholder="Type your financial query...">
+                <button id="sendButton" 
+                    class="bg-blue-600 text-white px-4 py-2 rounded-r-lg hover:bg-blue-700 transition">
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const chatContainer = document.getElementById('chatContainer');
+            const userInput = document.getElementById('userInput');
+            const sendButton = document.getElementById('sendButton');
+
+            function addMessage(message, isUser = false) {
+                const messageDiv = document.createElement('div');
+                
+                // Fix: Add classes individually
+                messageDiv.classList.add('mb-2', 'p-2', 'rounded');
+                
+                // Separate user and bot message styling
+                if (isUser) {
+                    messageDiv.classList.add('bg-blue-50', 'text-right');
+                } else {
+                    messageDiv.classList.add('bg-gray-50');
+                }
+                
+                messageDiv.innerHTML = `
+                    <span class="font-semibold ${isUser ? 'text-blue-700' : 'text-gray-700'}">
+                        ${isUser ? 'You' : 'Chatbot'}
+                    </span>
+                    <p class="text-sm">${message}</p>
+                `;
+                chatContainer.appendChild(messageDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+
+            function sendQuery() {
+                const query = userInput.value.trim();
+                if (query === '') return;
+
+                addMessage(query, true);
+                userInput.value = '';
+
+                fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    addMessage(data.response);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    addMessage('Sorry, there was an error processing your request.');
+                });
+            }
+
+            sendButton.addEventListener('click', sendQuery);
+            userInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendQuery();
+            });
+
+            // Welcome message
+            addMessage('Hello! I can help you with financial information about Apple, Microsoft, and Tesla.');
+        });
+    </script>
+</body>
+</html>
